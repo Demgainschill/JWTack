@@ -7,7 +7,8 @@ usage(){
 	cat << EOF
 		USAGE:
 		-h : Usage for JWTack 
-		-c : Converts Parses JWT token
+		-c : Converts Parses JWT token to json objects
+		-w : wordlist to be provided for bruteforcing
 
 EOF
 }
@@ -25,10 +26,56 @@ jwtCheck(){
 
 }
 
-while getopts ":hc:" OPTS; do
+hashcatBrute(){
+	wordlist=$1
+	if [[ -n $(which hashcat) ]]; then
+		echo "Hashcat exists"
+	fi
+	
+	sig=$(echo $1 | jq .alg | head -n 1 | tr '"' ' ' | tr -d ' ') 
+	mode=0
+	if [[ -f $wordlist ]]; then
+	 case $sig in
+		 hs256)
+			hashcat -a 0 -m 16500 $wordlist
+	       		;;
+		 hs384)
+ 			hashcat -a 0 -m 16600 $wordlist
+       			;;
+		 hs512)
+			hashcat -a 0 -m 16600 $wordlist
+			;;
+		*)
+			echo "mode not found" 
+			;;
+	
+	esac
+	fi	
+	hs256=16500
+	hs384=16600
+	hs512=16600
+	
+
+	echo "Attempting to use hashcat to bruteforce with $wordlist"
+
+}
+
+while getopts ":hc:w:j:f:" OPTS; do
 	case "$OPTS" in
 		h)
 			usage
+			;;
+		j)
+			jwt=$OPTARG
+			if [[ -n $jwt ]]; then
+				echo "jwt exists"
+			fi
+			;;
+		f)
+			wordlist=$OPTARG
+			if [[ -f $wordlist ]]; then
+				echo "wordlist exists"
+			fi
 			;;
 		c)
 			if [[ -n $OPTARG ]]; then
@@ -37,6 +84,12 @@ while getopts ":hc:" OPTS; do
 			else
 				echo "No jwt token provided.Exiting..."
 				exit 1
+			fi
+			;;
+		w)
+			if [[ -f $wordlist ]]; then
+			"Attempting to crack JWT signature with hashcat"
+			hashcatBrute $wordlist
 			fi
 			;;
 		\?)
