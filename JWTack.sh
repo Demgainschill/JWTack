@@ -28,22 +28,28 @@ jwtCheck(){
 
 hashcatBrute(){
 	wordlist=$1
+	jwt=$2
+		
 	if [[ -n $(which hashcat) ]]; then
 		echo "Hashcat exists"
 	fi
-	
-	sig=$(echo $1 | jq .alg | head -n 1 | tr '"' ' ' | tr -d ' ') 
+	jwttok=$2
+	jwt="$(echo $jwt | tr '.' '\n' | base64 -d )"
+	sig=$(echo $jwt | jq .alg | head -n 1 | tr '"' ' ' | tr -d ' ')
+	if [[ $? -eq 1 ]]; then
+		echo "Errors Encountered"
+	fi
 	mode=0
 	if [[ -f $wordlist ]]; then
 	 case $sig in
-		 hs256)
-			hashcat -a 0 -m 16500 $wordlist
+		 HS256)
+			hashcat -a 0 -m 16500 $jwttok $wordlist
 	       		;;
-		 hs384)
- 			hashcat -a 0 -m 16600 $wordlist
+		 HS384)
+ 			hashcat -a 0 -m 16600 $jwttok $wordlist
        			;;
-		 hs512)
-			hashcat -a 0 -m 16600 $wordlist
+		 HS512)
+			hashcat -a 0 -m 16600 $jwttok $wordlist
 			;;
 		*)
 			echo "mode not found" 
@@ -60,21 +66,33 @@ hashcatBrute(){
 
 }
 
+jwt=0
+wordlist=0
+
+
 while getopts ":hc:w:j:f:" OPTS; do
 	case "$OPTS" in
 		h)
 			usage
 			;;
 		j)
-			jwt=$OPTARG
-			if [[ -n $jwt ]]; then
-				echo "jwt exists"
+			jwttok=$OPTARG
+			if [[ -n $jwttok ]]; then
+				jwt=1
+				
+			else
+				echo "No JWT provided. Exiting"
+				exit 1
 			fi
 			;;
 		f)
 			wordlist=$OPTARG
 			if [[ -f $wordlist ]]; then
-				echo "wordlist exists"
+				wordlist=1
+				bruteFile=$OPTARG
+			else
+				echo "Is not a file. Exiting"
+				exit 1
 			fi
 			;;
 		c)
@@ -108,6 +126,16 @@ if [[ ! -n $1  ]]; then
 	usage
 	exit 1
 fi
+
+if [[ $jwt -eq 1 ]] && [[ $wordlist -eq 1 ]]; then 
+	echo "Both jwt and wordlist activated"
+	hashcatBrute $bruteFile $jwttok
+fi
+
+#if [[ $wordlist -eq 1 ]] || [[ $jwt -eq 1 ]]; then 
+#	echo "Only one arg wordlist or jwt provided. Exiting"
+#	exit 1
+#fi
 
 shift $((OPTIND-1))
 
