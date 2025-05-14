@@ -6,10 +6,12 @@
 usage(){
 	cat << EOF
 		USAGE:
-		-h : Usage for JWTack 
-		-c : Converts Parses JWT token to json objects
-		-w : wordlist to be provided for bruteforcing
-
+           -h            : Usage for JWTack 
+	   -c [jwt]      : Converts Parses JWT token to json objects
+	   -w [wordlist] : wordlist to be provided for bruteforcing
+	   -j [jwt]	 : jwt token to be used together with -f inorder to bruteforce with hashcat 
+	   -f [file] 	 : dictionary wordlist file to be provided inorder to crack with hashcat ( to be used with -j )
+   	   -e [argument] : encode argument with base64
 EOF
 }
 
@@ -32,12 +34,21 @@ hashcatBrute(){
 		
 	if [[ -n $(which hashcat) ]]; then
 		echo "Hashcat exists"
+	else
+		echo "Installing hashcat for apt users can be installed using your package managers."
+		apt-get install hashcat 
+		if [[ $? -eq 1 ]]; then
+			echo "Errors encountered while installing hashcat use distro specific package manager to install hashcat then run again"
+		exit 1
+		fi
 	fi
 	jwttok=$2
 	jwt="$(echo $jwt | tr '.' '\n' | base64 -d )"
 	sig=$(echo $jwt | jq .alg | head -n 1 | tr '"' ' ' | tr -d ' ')
+	
 	if [[ $? -eq 1 ]]; then
-		echo "Errors Encountered"
+		echo "Errors Encountered. Exiting.."
+		exit 1
 	fi
 	mode=0
 	if [[ -f $wordlist ]]; then
@@ -52,7 +63,8 @@ hashcatBrute(){
 			hashcat -a 0 -m 16600 $jwttok $wordlist
 			;;
 		*)
-			echo "mode not found" 
+			echo "mode not found. Exiting.."
+			exit 1
 			;;
 	
 	esac
@@ -70,10 +82,17 @@ jwt=0
 wordlist=0
 
 
-while getopts ":hc:w:j:f:" OPTS; do
+while getopts ":hc:w:j:f:e:" OPTS; do
 	case "$OPTS" in
 		h)
 			usage
+			;;
+		e)
+			secret=$OPTARG
+			if [[ -n $secret ]]; then
+				echo "encoding secret with base64"
+				echo "$secret" | base64
+			fi
 			;;
 		j)
 			jwttok=$OPTARG
@@ -127,10 +146,11 @@ if [[ ! -n $1  ]]; then
 	exit 1
 fi
 
+
 if [[ $jwt -eq 1 ]] && [[ $wordlist -eq 1 ]]; then 
 	echo "Both jwt and wordlist activated"
 	hashcatBrute $bruteFile $jwttok
-fi
+fi 2>/dev/null
 
 #if [[ $wordlist -eq 1 ]] || [[ $jwt -eq 1 ]]; then 
 #	echo "Only one arg wordlist or jwt provided. Exiting"
