@@ -1,17 +1,18 @@
 #!/bin/bash
 
-## JWTAck for bruteforcing jwt tokens and multiple other features
+## JWTAck for bruteforcing jwt tokens and a bunch of other features
 
 
 usage(){
 	cat << EOF
-		USAGE:
+		USAGE: ./JWTack [-h|-c|-w|-j|-f|-e]
            -h            : Usage for JWTack 
 	   -c [jwt]      : Converts Parses JWT token to json objects
 	   -w [wordlist] : wordlist to be provided for bruteforcing
 	   -j [jwt]	 : jwt token to be used together with -f inorder to bruteforce with hashcat 
 	   -f [file] 	 : dictionary wordlist file to be provided inorder to crack with hashcat ( to be used with -j )
-   	   -e [argument] : encode argument with base64
+	   -e [argument] : encode argument with base64 (without newline)
+	   
 EOF
 }
 
@@ -90,8 +91,8 @@ while getopts ":hc:w:j:f:e:" OPTS; do
 		e)
 			secret=$OPTARG
 			if [[ -n $secret ]]; then
-				echo "encoding secret with base64"
-				echo "$secret" | base64
+				echo "Encoded argument in base64" 
+				echo -n "$secret" | base64	
 			fi
 			;;
 		j)
