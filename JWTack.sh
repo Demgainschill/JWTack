@@ -2,10 +2,17 @@
 
 ## JWTAck for bruteforcing jwt tokens and a bunch of other features
 
+b=$(tput setaf 4)
+r=$(tput setaf 1)
+g=$(tput setaf 10)
+y=$(tput setaf 3)
+reset=$(tput sgr0)
+c=$(tput setaf 14)
+o=$(tput setaf 208)
 
 usage(){
 	cat << EOF
-		USAGE: ./JWTack [-h|-c|-w|-j|-f|-e]
+		USAGE: ./JWTack [-h|-c|-w|-j|-f|-e] [jwt|wordlist|file|base64]
            -h            : Usage for JWTack 
 	   -c [jwt]      : Converts Parses JWT token to json objects
 	   -w [wordlist] : wordlist to be provided for bruteforcing
@@ -17,9 +24,9 @@ EOF
 }
 
 jwtCheck(){
+	echo -e "\n${y}jwt is as follows${reset}\n"
 	jwt="$(echo $1  | tr '.' '\n' | base64 -d  2>/dev/null )"
 	echo $jwt | jq -r . 2>/dev/null
-
 	signature=$(echo $1 | tr '.' ' ' | cut -d ' ' -f 3 )	
 	if [[ -n $signature ]]; then
 		echo "$(echo "signature=$signature" | awk -F '=' '{print "{\""$1"\": \""$2"\"}"}')"
@@ -31,10 +38,10 @@ jwtCheck(){
 
 gentester(){
 
-key_bytes=$(openssl rand 16)  # 16 bytes = 128 bits
+	key_bytes=$(openssl rand 16)
 	key_base64url=$(echo -n "$key_bytes" | base64 | tr '+/' '-_' | tr -d '=')
 	key_base64url=$1
-	kid="key-123"  # Replace with your desired key ID
+	kid="key-123"
 	jwk=$(jq -c -n --arg k "$key_base64url" --arg kid "$kid" \
   		'{kty: "oct", kid: $kid, k: $k}')
 
@@ -47,7 +54,7 @@ key_bytes=$(openssl rand 16)  # 16 bytes = 128 bits
 	new_header_json=$(echo -n "$header_json" | jq -c \
   	--arg kty "oct" \
   	--arg kid "$kid" \
-  	'. + {alg: "HS256", kty: $kty, kid: $kid}')  # Add ', k: $key_base64url' to include k
+  	'. + {alg: "HS256", kty: $kty, kid: $kid, k}')  
 
 	new_header=$(echo -n "$new_header_json" | base64 | tr '+/' '-_' | tr -d '=')
 
@@ -62,6 +69,7 @@ key_bytes=$(openssl rand 16)  # 16 bytes = 128 bits
 	echo "JWK: $jwk"
 	echo "Symmetric key (base64url): $key_base64url"
 }
+
 hashcatBrute(){
 	wordlist=$1
 	jwt=$2
