@@ -20,6 +20,9 @@ usage(){
 	   -f [file] 	 : dictionary wordlist file to be provided inorder to crack with hashcat ( to be used with -j )
 	   -e [argument] : encode argument with base64 (without newline)
 	   -g [base64 ]  : generate new symmetric key using openssl 
+
+
+	   
 EOF
 }
 
@@ -137,37 +140,63 @@ genSymmetric(){
 	echo "New key: $newKey"	
 }
 
-
 jwt() {
   local secret="$1" header="$2" payload="$3"
 
-  [[ -z $secret || -z $header || -z $payload ]] && {
-    echo "Usage: ${g}$0${reset} [options] <secret> <header> <payload>"
-	echo "${b}Example:${reset} ${g}./JWTack.sh${reset} 'your_secret_key' '{'alg':'HS256','typ':'JWT'}' '{'sub':'1234567890','name':'John Doe'}' " 
-	exit 1;
-}
+  if [[ -z $secret || -z $header || -z $payload ]]; then
+    cat <<'EOF'
+Usage:  jwt <secret|keyfile> <header> <payload>
+
+  <secret|keyfile>  HMAC secret string   – for HS256/384/512
+                    PEM private key file – for RS256/384/512
+  <header>          JSON string or path to JSON file
+  <payload>         JSON string or path to JSON file
+
+Examples:
+  jwt 'my$ecret'  '{"alg":"HS256","typ":"JWT"}'  '{"sub":"123","name":"John"}'
+  jwt ./rsa_key.pem  header.json  payload.json
+EOF
+    return 1
+  fi
+
   [[ -f $header  ]] && header=$(<"$header")
   [[ -f $payload ]] && payload=$(<"$payload")
-  b64url() {
-    openssl base64 -A | tr '+/' '-_' | tr -d '=\n'
-  }
+
+  b64url() { openssl base64 -A | tr '+/' '-_' | tr -d '=\n'; }
 
   local enc_header enc_payload data signature
   enc_header=$(printf '%s' "$header"  | b64url)
   enc_payload=$(printf '%s' "$payload" | b64url)
   data="$enc_header.$enc_payload"
 
-  signature=$(printf '%s' "$data" |
-              openssl dgst -sha256 -mac HMAC -macopt "key:$secret" -binary |
-              b64url)
+  local alg
+  alg=$(grep -oE '"alg"[[:space:]]*:[[:space:]]*"[^"]+"' <<<"$header" \
+        | head -1 | sed -E 's/.*"alg"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
 
-  echo -e "\n${g}Created JWT:${reset} $data.$signature"
- 
+  case "$alg" in
+    HS256|HS384|HS512)
+      local sha="${alg:2}"      # 256 / 384 / 512
+      signature=$(printf '%s' "$data" |
+                  openssl dgst -sha$sha -mac HMAC -macopt "key:$secret" -binary |
+                  b64url)
+      ;;
+    RS256|RS384|RS512)
+      local sha="${alg:2}"
+      [[ ! -f $secret ]] && { echo "${y}RSA mode: secret must be a PEM key file${reset}"; return 1; }
+      signature=$(printf '%s' "$data" |
+                  openssl dgst -sha$sha -sign "$secret" -binary |
+                  b64url)
+      ;;
+    none)
+      signature='' ;; 
+    *)
+      echo "Unsupported alg \"$alg\""; return 1 ;;
+  esac
+
+  printf "${g}\nJWT (%s):${reset}\n%s.%s\n" "$alg" "$data" "$signature"
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  jwt "$@"
-fi
+[[ ${BASH_SOURCE[0]} == "$0" ]] && jwt "$@"
 
 
 jwt=0
