@@ -12,29 +12,42 @@ o=$(tput setaf 208)
 
 usage(){
 	cat << EOF
-		USAGE: ./JWTack [-h|-c|-w|-j|-f|-e] [jwt|wordlist|file|base64]
-           -h            : Usage for JWTack 
-	   -c [jwt]      : Converts Parses JWT token to json objects
-	   -w [wordlist] : wordlist to be provided for bruteforcing
-	   -j [jwt]	 : jwt token to be used together with -f inorder to bruteforce with hashcat 
-	   -f [file] 	 : dictionary wordlist file to be provided inorder to crack with hashcat ( to be used with -j )
-	   -e [argument] : encode argument with base64 (without newline)
-	   -g [base64 ]  : generate new symmetric key using openssl 
+${r}   ▗▖▗▖ ▗▖▗▄▄▄▖▗▄▖  ▗▄▄▖▗▖ ▗▖ ${reset}
+${r}   ▐▌▐▌ ▐▌  █ ▐▌ ▐▌▐▌   ▐▌▗▞▘ ${reset}
+${r}   ▐▌▐▌ ▐▌  █ ▐▛▀▜▌▐▌   ▐▛▚▖  ${reset}
+${r}▗▄▄▞▘▐▙█▟▌  █ ▐▌ ▐▌▝▚▄▄▖▐▌ ▐▌ ${reset}
+${r}                              ${reset}
+	
+	${b}USAGE${reset}: ./${g}JWTack${reset} [${y}-h${reset}|${y}-c${reset}|${y}-w${reset}|${y}-j${reset}|${y}-f${reset}|${y}-e${reset}] [${b}jwt${reset}|${b}wordlist${reset}|${b}file${reset}|${b}base64${reset}]
+           ${y}-h${reset}            : ${c}Usage for JWTack ${reset}
+	   ${y}-c${reset} [${b}jwt${reset}]      : ${c}Converts Parses JWT token to json objects ${reset}
+	   ${y}-w${reset} [${b}wordlist${reset}] : ${c}wordlist to be provided for bruteforcing ${reset}
+	   ${y}-j${reset} [${b}jwt${reset}]	 : ${c}jwt token to be used together with${reset} ${y}-f${reset}${c} inorder to bruteforce with hashcat ${reset}
+	   ${y}-f${reset} [${b}file${reset}] 	 : ${c}dictionary wordlist file to be provided inorder to crack with hashcat${reset} ( ${o}to be used with${reset} ${y}-j${reset} )
+	   ${y}-e${reset} [${b}argument${reset}] : ${c}encode argument with base64${reset} (${o}without newline${reset})
+	   ${y}-g${reset} [${b}base64${reset}]   : ${c}generate new symmetric key using openssl ${reset}
+	   ${y}-s${reset} [${b}secret${reset}]   : ${c}Create JWT token using secret header and payload ${reset} 
+      ${g}JWT Creation Options${reset}:
+                         ${y}secret${reset} – ${c}HMAC secret *or* PEM key${reset}
+                         ${y}hdr${reset}    – ${c}JSON header${reset} (${o}string or file${reset})
+                         ${y}pld${reset}    – ${c}JSON payload${reset} (${o}string or file${reset})
 
-
-	   
+${b}Examples${reset}:
+	./${g}JWTack.sh${reset} ${y}-s${reset} '${o}secret${reset}' '${g}{${reset}"${b}alg${reset}":"${g}HS256${reset}","${b}typ${reset}":"${g}JWT${reset}"${g}}${reset}'${reset} ${c}'${g}{${reset}"${b}sub${reset}":"${g}24682468${reset}","${b}name${reset}":"${g}Demgainschill${reset}"${g}}${reset}'${reset}  
+	./${g}JWTack${reset} ${y}-s${reset} ${b}private.pem${reset} ${c}header.json${reset} ${c}payload.json${reset}
 EOF
+	   
 }
 
 jwtCheck(){
-	echo -e "\n${y}jwt is as follows${reset}\n"
+	echo -e "\n${y}jwt decoded${reset}\n"
 	jwt="$(echo $1  | tr '.' '\n' | base64 -d  2>/dev/null )"
 	echo $jwt | jq -r . 2>/dev/null
 	signature=$(echo $1 | tr '.' ' ' | cut -d ' ' -f 3 )	
 	if [[ -n $signature ]]; then
 		echo "$(echo "signature=$signature" | awk -F '=' '{print "{\""$1"\": \""$2"\"}"}')"
 	else
-		echo "No signature found"
+		echo "${r}No signature found${reset}"
 	fi		
 
 }
@@ -78,12 +91,12 @@ hashcatBrute(){
 	jwt=$2
 		
 	if [[ -n $(which hashcat) ]]; then
-		echo "Hashcat exists"
+		echo "${g}Hashcat exists${reset}"
 	else
-		echo "Installing hashcat for apt users can be installed using your package managers."
+		echo "${y}Installing hashcat for apt users can be installed using your package managers.${reset}"
 		apt-get install hashcat 
 		if [[ $? -eq 1 ]]; then
-			echo "Errors encountered while installing hashcat use distro specific package manager to install hashcat then run again"
+			echo "${r}Errors encountered while installing hashcat use distro specific package manager to install hashcat then run again${reset}"
 		exit 1
 		fi
 	fi
@@ -92,23 +105,29 @@ hashcatBrute(){
 	sig=$(echo $jwt | jq .alg | head -n 1 | tr '"' ' ' | tr -d ' ')
 	
 	if [[ $? -eq 1 ]]; then
-		echo "Errors Encountered. Exiting.."
+		echo "${r}Errors Encountered. Exiting..${reset}"
 		exit 1
 	fi
 	mode=0
 	if [[ -f $wordlist ]]; then
 	 case $sig in
 		 HS256)
-			hashcat -a 0 -m 16500 $jwttok $wordlist --force
+		
+			echo "${y}Attempting to use hashcat to bruteforce with $wordlist${reset}"
+		 	 hashcat -a 0 -m 16500 $jwttok $wordlist --force
 	       		;;
 		 HS384)
+			
+			echo "${y}Attempting to use hashcat to bruteforce with $wordlist${reset}"
  			hashcat -a 0 -m 16600 $jwttok $wordlist --force
        			;;
 		 HS512)
+			
+			echo "${y}Attempting to use hashcat to bruteforce with $wordlist${reset}"
 			hashcat -a 0 -m 16600 $jwttok $wordlist --force
 			;;
 		*)
-			echo "mode not found. Exiting.."
+			echo "${r}mode not found. Exiting..${reset}"
 			exit 1
 			;;
 	
@@ -119,7 +138,6 @@ hashcatBrute(){
 	hs512=16600
 	
 
-	echo "Attempting to use hashcat to bruteforce with $wordlist"
 
 }
 
@@ -136,8 +154,8 @@ genSymmetric(){
 
 	newJwt="$header.$payload.$newSignature"
 
-	echo "New JWT: $newJwt"
-	echo "New key: $newKey"	
+	echo "${g}New JWT:${reset} $newJwt"
+	echo "${g}New key:${reset} $newKey"	
 }
 
 jwt() {
@@ -182,7 +200,7 @@ EOF
       ;;
     RS256|RS384|RS512)
       local sha="${alg:2}"
-      [[ ! -f $secret ]] && { echo "${y}RSA mode: secret must be a PEM key file${reset}"; return 1; }
+      [[ ! -f $secret ]] && { echo "${r}RSA mode: secret must be a PEM key file${reset}"; return 1; }
       signature=$(printf '%s' "$data" |
                   openssl dgst -sha$sha -sign "$secret" -binary |
                   b64url)
@@ -190,35 +208,47 @@ EOF
     none)
       signature='' ;; 
     *)
-      echo "Unsupported alg \"$alg\""; return 1 ;;
+      echo "${r}Unsupported alg${reset} \"$alg\""; return 1 ;;
   esac
 
   printf "${g}\nJWT (%s):${reset}\n%s.%s\n" "$alg" "$data" "$signature"
 }
 
-[[ ${BASH_SOURCE[0]} == "$0" ]] && jwt "$@"
 
 
 jwt=0
 wordlist=0
 
 
-while getopts ":hc:w:j:f:e:g:" OPTS; do
+while getopts ":hc:w:j:f:e:g:s:" OPTS; do
 	case "$OPTS" in
 		h)
 			usage
 			;;
+		s)
+		      secret="$OPTARG"
+		      header="${!OPTIND}";  (( OPTIND++ ))
+      		      payload="${!OPTIND}"; (( OPTIND++ ))
+
+      		      if [[ -z $header || -z $payload ]]; then
+                            echo "-s needs <secret> <header> <payload>"
+        	            usage; exit 1
+                      fi
+
+			      jwt "$secret" "$header" "$payload"
+      			      exit 
+                      ;;
 		g)
 			secret="$OPTARG"
 			if [[ -n $secret ]]; then
-				echo "Must be used with -j flag"
+				echo "${r}Must be used with${reset} ${y}-j${reset}${r} flag${reset}"
 				generate=1
 			fi
 			;;
 		e)
 			secret=$OPTARG
 			if [[ -n $secret ]]; then
-				echo "Encoded argument in base64" 
+				echo "${g}Encoded argument in base64${reset} ( ${o}With no newline \n${reset} )" 
 				echo -n "$secret" | base64	
 			fi
 			;;
@@ -228,7 +258,7 @@ while getopts ":hc:w:j:f:e:g:" OPTS; do
 				jwt=1
 				
 			else
-				echo "No JWT provided. Exiting"
+				echo "${r}No JWT provided. Exiting${reset}"
 				exit 1
 			fi
 			;;
@@ -238,7 +268,7 @@ while getopts ":hc:w:j:f:e:g:" OPTS; do
 				wordlist=1
 				bruteFile=$OPTARG
 			else
-				echo "Is not a file. Exiting"
+				echo "${r}Is not a file. Exiting..${reset}"
 				exit 1
 			fi
 			;;
@@ -247,29 +277,29 @@ while getopts ":hc:w:j:f:e:g:" OPTS; do
 				JWT="$OPTARG"
 				jwtCheck $JWT
 			else
-				echo "No jwt token provided.Exiting..."
+				echo "${r}No jwt token provided.Exiting...${reset}"
 				exit 1
 			fi
 			;;
 		w)
 			if [[ -f $wordlist ]]; then
-			"Attempting to crack JWT signature with hashcat"
+			"${y}Attempting to crack JWT signature with hashcat${reset}"
 			hashcatBrute $wordlist
 			fi
 			;;
 		\?)
-			echo "Invalid Options"
+			echo "${r}Invalid Option. Exiting..${reset}"
 			exit 1
 			;;
 		:)
-			echo "Missing arguments"
+			echo "${r}Missing arguments. Exiting..${reset}"
 			exit 1
 			;;
 	esac
 done
 
 if [[ ! -n $1  ]]; then
-	echo "Too less arguments"
+	echo "${r}Too less arguments.Exiting..${reset}"
 	usage
 	exit 1
 fi
@@ -281,7 +311,7 @@ if [[ $generate -eq 1 ]] && [[ $jwt -eq 1 ]]; then
 fi
 
 if [[ $jwt -eq 1 ]] && [[ $wordlist -eq 1 ]]; then 
-	echo "Both jwt and wordlist activated"
+	echo "${g}Both jwt and wordlist activated${reset}"
 	hashcatBrute $bruteFile $jwttok
 fi 2>/dev/null
 
@@ -293,7 +323,7 @@ fi 2>/dev/null
 shift $((OPTIND-1))
 
 if [[ $1 -ge 1 ]]; then
-	echo "Too many arguments"
+	echo "${r}Too many arguments.Exiting..${reset}"
 	usage
 	exit 1
 fi
