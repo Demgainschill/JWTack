@@ -65,9 +65,9 @@ gentester(){
 
 	new_jwt="$new_header.$new_payload.$new_signature"
 
-	echo "New JWT: $new_jwt"
-	echo "JWK: $jwk"
-	echo "Symmetric key (base64url): $key_base64url"
+	echo "${g}New JWT:${reset} $new_jwt"
+	echo "${g}JWK:${reset} $jwk"
+	echo "${g}Symmetric key (base64url):${reset} $key_base64url"
 }
 
 hashcatBrute(){
@@ -136,6 +136,39 @@ genSymmetric(){
 	echo "New JWT: $newJwt"
 	echo "New key: $newKey"	
 }
+
+
+jwt() {
+  local secret="$1" header="$2" payload="$3"
+
+  [[ -z $secret || -z $header || -z $payload ]] && {
+    echo "Usage: ${g}$0${reset} [options] <secret> <header> <payload>"
+	echo "${b}Example:${reset} ${g}./JWTack.sh${reset} 'your_secret_key' '{'alg':'HS256','typ':'JWT'}' '{'sub':'1234567890','name':'John Doe'}' " 
+	exit 1;
+}
+  [[ -f $header  ]] && header=$(<"$header")
+  [[ -f $payload ]] && payload=$(<"$payload")
+  b64url() {
+    openssl base64 -A | tr '+/' '-_' | tr -d '=\n'
+  }
+
+  local enc_header enc_payload data signature
+  enc_header=$(printf '%s' "$header"  | b64url)
+  enc_payload=$(printf '%s' "$payload" | b64url)
+  data="$enc_header.$enc_payload"
+
+  signature=$(printf '%s' "$data" |
+              openssl dgst -sha256 -mac HMAC -macopt "key:$secret" -binary |
+              b64url)
+
+  echo -e "\n${g}Created JWT:${reset} $data.$signature"
+ 
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  jwt "$@"
+fi
+
 
 jwt=0
 wordlist=0
@@ -213,7 +246,7 @@ if [[ ! -n $1  ]]; then
 fi
 
 if [[ $generate -eq 1 ]] && [[ $jwt -eq 1 ]]; then
-	echo "generating new symmetric key with $secret on $jwttok"
+	echo "${g}Generating new symmetric key with ${b}$secret${reset}${g} on${reset} ${b}$jwttok${reset}${g} ${reset}"
 	#genSymmetric $secret $jwttok
 	gentester $jwttok
 fi
