@@ -18,7 +18,7 @@ ${r}   ▐▌▐▌ ▐▌  █ ▐▛▀▜▌▐▌   ▐▛▚▖  ${reset}
 ${r}▗▄▄▞▘▐▙█▟▌  █ ▐▌ ▐▌▝▚▄▄▖▐▌ ▐▌ ${reset}
 ${r}                              ${reset}
 	
-	${b}USAGE${reset}: ./${g}JWTack${reset} [${y}-h${reset}|${y}-c${reset}|${y}-w${reset}|${y}-j${reset}|${y}-f${reset}|${y}-e${reset}] [${b}jwt${reset}|${b}wordlist${reset}|${b}file${reset}|${b}base64${reset}]
+	${b}USAGE${reset}: ./${g}JWTack${reset} [${y}-h${reset}|${y}-c${reset}|${y}-w${reset}|${y}-j${reset}|${y}-f${reset}|${y}-e${reset}|${y}-g${reset}|${y}-s${reset}] [${b}jwt${reset}|${b}wordlist${reset}|${b}file${reset}|${b}base64${reset}|${b}secret${reset}]
            ${y}-h${reset}            : ${c}Usage for JWTack ${reset}
 	   ${y}-c${reset} [${b}jwt${reset}]      : ${c}Converts Parses JWT token to json objects ${reset}
 	   ${y}-w${reset} [${b}wordlist${reset}] : ${c}wordlist to be provided for bruteforcing ${reset}
@@ -34,7 +34,7 @@ ${r}                              ${reset}
 
 ${b}Examples${reset}:
 	./${g}JWTack.sh${reset} ${y}-s${reset} '${o}secret${reset}' '${g}{${reset}"${b}alg${reset}":"${g}HS256${reset}","${b}typ${reset}":"${g}JWT${reset}"${g}}${reset}'${reset} ${c}'${g}{${reset}"${b}sub${reset}":"${g}24682468${reset}","${b}name${reset}":"${g}Demgainschill${reset}"${g}}${reset}'${reset}  
-	./${g}JWTack${reset} ${y}-s${reset} ${b}private.pem${reset} ${c}header.json${reset} ${c}payload.json${reset}
+	./${g}JWTack${reset} ${y}-s${reset} ${o}private.pem${reset} ${c}header.json${reset} ${c}payload.json${reset}
 EOF
 	   
 }
