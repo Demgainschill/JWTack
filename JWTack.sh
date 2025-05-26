@@ -19,7 +19,6 @@ ${r}▗▄▄▞▘▐▙█▟▌  █ ▐▌ ▐▌▝▚▄▄▖▐▌ ▐�
 ${r}                              ${reset}
 	
 	${b}USAGE${reset}: ./${g}JWTack${reset} [${y}-h${reset}|${y}-c${reset}|${y}-w${reset}|${y}-j${reset}|${y}-f${reset}|${y}-e${reset}|${y}-g${reset}|${y}-s${reset}] [${b}jwt${reset}|${b}wordlist${reset}|${b}file${reset}|${b}base64${reset}|${b}secret${reset}]
-           ${y}-h${reset}            : ${c}Usage for JWTack ${reset}
 	   ${y}-c${reset} [${b}jwt${reset}]      : ${c}Converts Parses JWT token to json objects ${reset}
 	   ${y}-w${reset} [${b}wordlist${reset}] : ${c}wordlist to be provided for bruteforcing ${reset}
 	   ${y}-j${reset} [${b}jwt${reset}]	 : ${c}jwt token to be used together with${reset} ${y}-f${reset}${c} inorder to bruteforce with hashcat ${reset}
@@ -27,6 +26,7 @@ ${r}                              ${reset}
 	   ${y}-e${reset} [${b}argument${reset}] : ${c}encode argument with base64${reset} (${o}without newline${reset})
 	   ${y}-g${reset} [${b}base64${reset}]   : ${c}generate new symmetric key using openssl ${reset}
 	   ${y}-s${reset} [${b}secret${reset}]   : ${c}Create JWT token using secret header and payload ${reset} 
+           ${y}-h${reset}            : ${c}Usage for JWTack ${reset}
       ${g}JWT Creation Options${reset}:
                          ${y}secret${reset} – ${c}HMAC secret *or* PEM key${reset}
                          ${y}hdr${reset}    – ${c}JSON header${reset} (${o}string or file${reset})
