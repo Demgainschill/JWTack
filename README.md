@@ -1,5 +1,5 @@
-# JWTack 
-## <p align="center">Elite JWT Token Manipulator Suite</p>
+# <p align="center"> JWTack </p> 
+### <p align="center">Elite JWT Token Manipulator Suite</p>
 <p align="center" >
 <img src=https://github.com/user-attachments/assets/1272d5d1-32ed-4e5d-8ab1-bae773cd284f width=300 height=300>
 </p>
