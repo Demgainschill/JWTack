@@ -3,6 +3,11 @@
 <p align="center" >
 <img src=https://github.com/user-attachments/assets/1272d5d1-32ed-4e5d-8ab1-bae773cd284f width=300 height=300>
 </p>
+<p align="center"> 
+   <img src=https://img.shields.io/badge/release-v1.0-blue/>
+   <img src=https://img.shields.io/badge/language-bash-brightgreen/>
+</p>
+
 
 ![Screenshot From 2025-05-27 13-42-51](https://github.com/user-attachments/assets/9b3bed00-c468-4934-815d-173c4d8da9c9)
 
