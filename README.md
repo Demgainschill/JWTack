@@ -5,7 +5,7 @@
 </p>
 <p align="center"> 
    <img src=https://img.shields.io/badge/release-v1.0.0-blue/>
-   <img src=https://img.shields.io/badge/language-bash-brightgreen/>
+   <img src=https://img.shields.io/badge/bash-v5.2.37-brightgreen/>
 </p>
 
 
